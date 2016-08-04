@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row">
+	<div class="col-sm-12">
+		<form action="{{ url_for('subscribe') }}" method="POST" class="form-horizontal">
+			<div class="form-group">
+				<label class="col-sm-2 control-label">Protocol</label>
+				<div class="col-sm-10">
+					<select name="protocol" class="form-control">
+						<option value="MQTT">MQTT</option>
+						<option value="CoAP">CoAP</option>				
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">Host</label>
+				<div class="col-sm-10">
+					<input type="text" name="host" class="form-control">
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">Port</label>
+				<div class="col-sm-10">
+					<input type="text" name="port" class="form-control">
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">Topic</label>
+				<div class="col-sm-10">
+					<input type="text" name="topic" class="form-control">
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-offset-2 col-sm-10">
+					<input class="btn btn-default" type="submit" value="Subscribe">
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+{% endblock %}

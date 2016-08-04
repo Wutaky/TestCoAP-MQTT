@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script type="text/javascript" charset="utf-8">
+	$(document).ready(function(){
+		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket_test');
+		socket.on('echo', function(msg) {
+            $('#output').html(msg.payload);
+        });
+	});
+</script>
+
+<div class="row">
+	<div class="col-md-3">
+		<h4>Protocol:</h4>
+		<p>{{ result.protocol }}</p>
+	</div>
+	<div class="col-md-3">
+		<h4>Host:</h4>
+		<p>{{ result.host }}</p>
+	</div>
+	<div class="col-md-3">
+		<h4>Port:</h4>
+		<p>{{ result.port }}</p>
+	</div>
+	<div class="col-md-3">
+		<h4>Topic:</h4>
+		<p>{{ result.topic }}</p>
+	</div>
+	<div class="col-md-12">
+		<h4>Message:</h4>
+		<p><div id="output"></div></p>
+	</div>
+</div>
+{% endblock %}
