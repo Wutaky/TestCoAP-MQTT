@@ -7,6 +7,10 @@
 			var message = msg.payload.replace('\n', '<br>');
             $('#output_1').html(message);
         });
+        socket.on('coap_echo', function(msg) {
+			var message = msg.payload.replace('\n', '<br>');
+            $('#output_2').html(message);
+        });
 	});
 </script>
 {% endblock %}
@@ -18,7 +22,7 @@
 		<br>
 		<div class="col-md-3">
 			<h4>Protocol:</h4>
-			<p>{{ result.protocol_1 }}</p>
+			<p>MQTT</p>
 		</div>
 		<div class="col-md-3">
 			<h4>Host:</h4>
@@ -44,7 +48,7 @@
 	<br>
 	<div class="col-md-3">
 		<h4>Protocol:</h4>
-		<p>{{ result.protocol_2 }}</p>
+		<p>CoAP</p>
 	</div>
 	<div class="col-md-3">
 		<h4>Host:</h4>
@@ -60,7 +64,7 @@
 	</div>
 	<div class="col-md-12">
 		<h4>Message:</h4>
-		<p><div id="output_1"></div></p>
+		<p><div id="output_2"></div></p>
 	</div>
 	{% endif %}
 </div>

@@ -22,8 +22,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
-
-class MQTT_subscribe(object):
+class mqttSubscribe(object):
 	mqttc = mqtt.Client()	
 
 	def on_connect(mqttc, obj, flags, rc):
@@ -49,43 +48,72 @@ class MQTT_subscribe(object):
 	mqttc.on_message = on_message
 
 
-class CoAP_subscribe():
-    def __init__(self, protocol):
-        self.protocol = protocol
-        reactor.callLater(1, self.requestResource)
+class coapSubcribe(object):
+    # def __init__(self, host, port, topic):
+    # 	# log.startLogging(sys.stdout)
+    	
+    # 	endpoint = resource.Endpoint(None)
+    # 	protocol = coap.Coap(endpoint)
+    #     self.protocol = protocol
+    #     self.host = host
+    #     self.port = port
+    #     self.topic = topic
 
-    def requestResource(self, host, topic, port):
+    #     reactor.listenUDP(61616, protocol)        
+    #     reactor.callLater(0, self.requestResource)
+    #     reactor.run()
+
+    endpoint = resource.Endpoint(None)
+    protocol = coap.Coap(endpoint)
+    host = ''
+    port = 0
+    topic = ''
+    tempReactor = reactor
+
+    def subscribe(self, host, port, topic):
+    	self.host = host
+        self.port = port
+        self.topic = topic
+        self.tempReactor.listenUDP(61616, self.protocol)
+        self.tempReactor.callLater(0, self.requestResource)
+    	self.tempReactor.run()
+
+    def requestResource(self):
         request = coap.Message(code=coap.GET)
-        #Send request to "coap://192.168.0.100:5683/temp-and-humi"
-        request.opt.uri_path = (topic,)
+        # Send request to "coap://192.168.0.100:5683/temp-and-humi"
+        request.opt.uri_path = (self.topic,)
         request.opt.observe = 0
-        request.remote = (ip_address(host), port)
-        d = protocol.request(request, observeCallback=self.printLaterResponse)
-        d.addCallback(self.printResponse)
+        request.remote = (ip_address(self.host), self.port)
+        d = self.protocol.request(request, observeCallback = self.printLaterResponse)
         d.addErrback(self.noResponse)
 
-    def printResponse(self, response):
-        print 'First result: ' + response.payload
-        socketio.emit('coap_echo', {'payload': msg.payload}, broadcast = True, namespace = '/socket_test')
-        #reactor.stop()
-
     def printLaterResponse(self, response):
-        print 'Observe result: ' + response.payload
-        socketio.emit('coap_echo', {'payload': msg.payload}, broadcast = True, namespace = '/socket_test')
+        print(response.payload)
+        socketio.emit('coap_echo', {'payload': response.payload}, broadcast = True, namespace = '/socket_test')
 
     def noResponse(self, failure):
-        print 'Failed to fetch resource:'
-        print failure
+        print('Failed to fetch resource:')
+        print(failure)
+
+    def unsubscribe(self):
+    	self.tempReactor.callFromThread(reactor.stop)
+
+
+@app.route('/unsubscribe/', methods = ['GET'])
+def unsubscribe():
+	m_sub = mqttSubscribe()
+	m_sub.unsubscribe()
+	c_sub = coapSubcribe()
+	c_sub.unsubscribe()
+	return redirect('/')
 
 
 @app.route('/', methods = ['GET', 'POST'])
 def homepage():	
 	if request.method == 'POST':
-		protocol_1 = request.form['protocol_1']
 		host_1 = request.form['host_1'].strip()
 		port_1 = request.form['port_1'].strip()
 		topic_1 = request.form["topic_1"].strip()
-		protocol_2 = request.form['protocol_2'].strip()
 		host_2 = request.form['host_2'].strip()
 		port_2 = request.form['port_2'].strip()
 		topic_2 = request.form["topic_2"].strip()
@@ -116,12 +144,10 @@ def homepage():
 			validation = False
 			flash('Topic can not be empty!')
 
-		result = {'protocol_1': protocol_1,
-				  'host_1': host_1,
+		result = {'host_1': host_1,
 				  'port_1': port_1,
 				  'topic_1': topic_1,
 				  'empty_1': empty_1,
-				  'protocol_2': protocol_2,
 				  'host_2': host_2,
 				  'port_2': port_2,
 				  'topic_2': topic_2,
@@ -130,18 +156,12 @@ def homepage():
 
 		if validation:
 			if not empty_1:
-				if protocol_1 == 'MQTT':
-					m_sub = MQTT_subscribe()
-					m_sub.subscribe(host_1, port_1, topic_1)
-				if protocol_1 == 'CoAP':
-					pass
+				m_sub = mqttSubscribe()
+				m_sub.subscribe(host_1, port_1, topic_1)
 			if not empty_2:
-				if protocol_2 == 'CoAP':
-					pass
-				if protocol_2 == 'MQTT':
-					print('Come in!')
-					# m_sub = MQTT_subscribe()
-					# m_sub.subscribe(host_2, port_2, topic_2)
+				# c_sub = coapSubcribe(host_2, port_2, topic_2)
+				c_sub = coapSubcribe()
+				c_sub.subscribe(host_2, port_2, topic_2)
 
 			return render_template('test_result.html', result = result)
 		else:
@@ -150,22 +170,15 @@ def homepage():
 		return render_template('test.html', result = {})
 
 
-@app.route('/unsubscribe/', methods = ['GET'])
-def unsubscribe():
-	m_sub = MQTT_subscribe()
-	m_sub.unsubscribe()
-	return redirect('/')
-
-
 @app.route('/chat/', methods = ['GET'])
 def chat():
 	return render_template('chat.html')
 
 
 @socketio.on('send_message', namespace = '/socket_test')
-def test_message(message):
+def testMessage(message):
     import datetime
-    emit('echo', {'payload': datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S") + ' :: ' + message['data']}, broadcast = True)
+    emit('mqtt_echo', {'payload': datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S") + ' :: ' + message['data']}, broadcast = True)
 
 
 if __name__ == '__main__':
