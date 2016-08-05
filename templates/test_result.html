@@ -3,9 +3,9 @@
 <script type="text/javascript" charset="utf-8">
 	$(document).ready(function(){
 		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket_test');
-		socket.on('echo', function(msg) {
+		socket.on('mqtt_echo', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
-            $('#output').html(message);
+            $('#output_1').html(message);
         });
 	});
 </script>
@@ -13,27 +13,56 @@
 
 {% block content %}
 <div class="row">
+	{% if not result.empty_1 %}
+		<h3>Resource #1</h3>
+		<br>
+		<div class="col-md-3">
+			<h4>Protocol:</h4>
+			<p>{{ result.protocol_1 }}</p>
+		</div>
+		<div class="col-md-3">
+			<h4>Host:</h4>
+			<p>{{ result.host_1 }}</p>
+		</div>
+		<div class="col-md-3">
+			<h4>Port:</h4>
+			<p>{{ result.port_1 }}</p>
+		</div>
+		<div class="col-md-3">
+			<h4>Topic:</h4>
+			<p>{{ result.topic_1 }}</p>
+		</div>
+		<div class="col-md-12">
+			<h4>Message:</h4>
+			<p><div id="output_1"></div></p>
+		</div>
+	{% endif %}
+	
+	{% if not result.empty_2 %}
+	<br>
+	<h3>Resource #2</h3>
+	<br>
 	<div class="col-md-3">
 		<h4>Protocol:</h4>
-		<p>{{ result.protocol }}</p>
+		<p>{{ result.protocol_2 }}</p>
 	</div>
 	<div class="col-md-3">
 		<h4>Host:</h4>
-		<p>{{ result.host }}</p>
+		<p>{{ result.host_2 }}</p>
 	</div>
 	<div class="col-md-3">
 		<h4>Port:</h4>
-		<p>{{ result.port }}</p>
+		<p>{{ result.port_2 }}</p>
 	</div>
 	<div class="col-md-3">
 		<h4>Topic:</h4>
-		<p>{{ result.topic }}</p>
+		<p>{{ result.topic_2 }}</p>
 	</div>
 	<div class="col-md-12">
 		<h4>Message:</h4>
-		<p><div id="output"></div></p>
+		<p><div id="output_1"></div></p>
 	</div>
-	
+	{% endif %}
 </div>
 <div class="row">
 	<div class="border-row" style="width: 100%; margin-bottom: 30px;"></div>

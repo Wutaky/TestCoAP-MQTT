@@ -1,6 +1,6 @@
 import sys
 
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.python import log
 
 import txthings.coap as coap
