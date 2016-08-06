@@ -19,7 +19,6 @@
 <div class="row">
 	{% if not result.empty_1 %}
 		<h3>Resource #1</h3>
-		<br>
 		<div class="col-md-3">
 			<h4>Protocol:</h4>
 			<p>MQTT</p>
@@ -39,37 +38,36 @@
 		<div class="col-md-12">
 			<h4>Message:</h4>
 			<p><div id="output_1"></div></p>
+			<div class="border-row" style="margin-bottom: 50px;"></div>
 		</div>
 	{% endif %}
 	
-	{% if not result.empty_2 %}
-	<br>
-	<h3>Resource #2</h3>
-	<br>
-	<div class="col-md-3">
-		<h4>Protocol:</h4>
-		<p>CoAP</p>
-	</div>
-	<div class="col-md-3">
-		<h4>Host:</h4>
-		<p>{{ result.host_2 }}</p>
-	</div>
-	<div class="col-md-3">
-		<h4>Port:</h4>
-		<p>{{ result.port_2 }}</p>
-	</div>
-	<div class="col-md-3">
-		<h4>Topic:</h4>
-		<p>{{ result.topic_2 }}</p>
-	</div>
-	<div class="col-md-12">
-		<h4>Message:</h4>
-		<p><div id="output_2"></div></p>
-	</div>
+	{% if not result.empty_2 %}		
+		<h3>Resource #2</h3>
+		<div class="col-md-3">
+			<h4>Protocol:</h4>
+			<p>CoAP</p>
+		</div>
+		<div class="col-md-3">
+			<h4>Host:</h4>
+			<p>{{ result.host_2 }}</p>
+		</div>
+		<div class="col-md-3">
+			<h4>Port:</h4>
+			<p>{{ result.port_2 }}</p>
+		</div>
+		<div class="col-md-3">
+			<h4>Topic:</h4>
+			<p>{{ result.topic_2 }}</p>
+		</div>
+		<div class="col-md-12">
+			<h4>Message:</h4>
+			<p><div id="output_2"></div></p>
+		</div>
 	{% endif %}
 </div>
 <div class="row">
-	<div class="border-row" style="width: 100%; margin-bottom: 30px;"></div>
+	<div class="border-row" style="margin-bottom: 30px;"></div>
 	<div class="col-md-12">
 		<div class="col-md-3 col-md-offset-3"></div>
 		<div class="col-md-3 col-md-offset-3">

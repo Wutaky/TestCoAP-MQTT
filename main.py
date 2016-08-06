@@ -3,11 +3,12 @@ monkey.patch_all()
 
 import sys
 
+from threading import Thread
+
 from flask import Flask, render_template, redirect, request, flash
 from flask_socketio import SocketIO, emit
 
 import paho.mqtt.client as mqtt
-
 
 from twisted.internet import reactor
 from twisted.python import log
@@ -29,7 +30,7 @@ class mqttSubscribe(object):
 	    print("rc: "+str(rc))
 
 	def on_message(mqttc, obj, msg):
-	    print(msg.topic+"\n"+str(msg.payload))
+	    print('MQTT:\n'+msg.topic+"\n"+str(msg.payload))
 	    socketio.emit('mqtt_echo', {'payload': msg.payload}, broadcast = True, namespace = '/socket_test')
 
 	def on_subscribe(mqttc, obj, mid, granted_qos):
@@ -68,15 +69,15 @@ class coapSubcribe(object):
     host = ''
     port = 0
     topic = ''
-    tempReactor = reactor
 
     def subscribe(self, host, port, topic):
     	self.host = host
         self.port = port
         self.topic = topic
-        self.tempReactor.listenUDP(61616, self.protocol)
-        self.tempReactor.callLater(0, self.requestResource)
-    	self.tempReactor.run()
+    	if not reactor.running:
+	    	reactor.listenUDP(61616, self.protocol)
+	    	reactor.callLater(0, self.requestResource)
+	    	reactor.run()
 
     def requestResource(self):
         request = coap.Message(code=coap.GET)
@@ -88,23 +89,18 @@ class coapSubcribe(object):
         d.addErrback(self.noResponse)
 
     def printLaterResponse(self, response):
-        print(response.payload)
+        print('CoAP:\n' + response.payload)
         socketio.emit('coap_echo', {'payload': response.payload}, broadcast = True, namespace = '/socket_test')
 
     def noResponse(self, failure):
         print('Failed to fetch resource:')
         print(failure)
 
-    def unsubscribe(self):
-    	self.tempReactor.callFromThread(reactor.stop)
-
 
 @app.route('/unsubscribe/', methods = ['GET'])
 def unsubscribe():
-	m_sub = mqttSubscribe()
-	m_sub.unsubscribe()
-	c_sub = coapSubcribe()
-	c_sub.unsubscribe()
+	mqtt_sub = mqttSubscribe()
+	mqtt_sub.unsubscribe()
 	return redirect('/')
 
 
@@ -137,9 +133,10 @@ def homepage():
 		if port_1 == '' and not empty_1 or port_2 == '' and not empty_2 or empty_1 and empty_2:
 			validation = False
 			flash('Port can not be empty!')
-		if port_1 > 9999 and not empty_1 or port_2 > 9999 and not empty_2:
-			validation = False
-			flash('Wrong port!')
+		if port_1 != '' or port_2 != '':
+			if port_1 > 9999 and not empty_1 or port_2 > 9999 and not empty_2:
+				validation = False
+				flash('Wrong port!')
 		if topic_1 == '' and not empty_1 or topic_2 == '' and not empty_2 or empty_1 and empty_2:
 			validation = False
 			flash('Topic can not be empty!')
@@ -156,12 +153,14 @@ def homepage():
 
 		if validation:
 			if not empty_1:
-				m_sub = mqttSubscribe()
-				m_sub.subscribe(host_1, port_1, topic_1)
+				mqtt_sub = mqttSubscribe()
+				mqtt_thread = Thread(target = mqtt_sub.subscribe, args = [host_1, port_1, topic_1])
+				mqtt_thread.start()				
 			if not empty_2:
-				# c_sub = coapSubcribe(host_2, port_2, topic_2)
-				c_sub = coapSubcribe()
-				c_sub.subscribe(host_2, port_2, topic_2)
+				# coap_sub = coapSubcribe(host_2, port_2, topic_2)
+				coap_sub = coapSubcribe()
+				coap_thread = Thread(target = coap_sub.subscribe, args = [host_2, port_2, topic_2])
+				coap_thread.start()
 
 			return render_template('test_result.html', result = result)
 		else:
@@ -178,7 +177,7 @@ def chat():
 @socketio.on('send_message', namespace = '/socket_test')
 def testMessage(message):
     import datetime
-    emit('mqtt_echo', {'payload': datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S") + ' :: ' + message['data']}, broadcast = True)
+    emit('coap_echo', {'payload': datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S") + ' :: ' + message['data']}, broadcast = True)
 
 
 if __name__ == '__main__':
