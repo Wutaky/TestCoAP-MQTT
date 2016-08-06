@@ -24,19 +24,19 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
 class mqttSubscribe(object):
-	mqttc = mqtt.Client()	
+	mqttc = mqtt.Client()
 
 	def on_connect(mqttc, obj, flags, rc):
 	    print("rc: "+str(rc))
 
 	def on_message(mqttc, obj, msg):
-	    print('MQTT:\n'+msg.topic+"\n"+str(msg.payload))
-	    socketio.emit('mqtt_echo', {'payload': msg.payload}, broadcast = True, namespace = '/socket_test')
+	    print('=====================\nMQTT:\n'+msg.topic+"\n"+str(msg.payload)+'\n=====================')
+	    socketio.emit(msg.topic, {'payload': msg.payload}, broadcast = True, namespace = '/socket_test')
 
 	def on_subscribe(mqttc, obj, mid, granted_qos):
 	    print("Subscribed: "+str(mid)+" "+str(granted_qos))
 
-	def subscribe(self, host, port, topic):		
+	def subscribe(self, host, port, topic):
 		self.mqttc.connect(host, port)
 		self.mqttc.subscribe(topic, 0)
 		self.mqttc.loop_start()
@@ -72,16 +72,17 @@ class coapSubcribe(object):
 
     def subscribe(self, host, port, topic):
     	self.host = host
-        self.port = port
-        self.topic = topic
+    	self.port = port
+    	self.topic = topic
     	if not reactor.running:
-	    	reactor.listenUDP(61616, self.protocol)
-	    	reactor.callLater(0, self.requestResource)
-	    	reactor.run()
+    		reactor.listenUDP(61616, self.protocol)
+    		reactor.callLater(0, self.requestResource)
+    		reactor.run()
+    	else:
+    		self.requestResource()
 
     def requestResource(self):
         request = coap.Message(code=coap.GET)
-        # Send request to "coap://192.168.0.100:5683/temp-and-humi"
         request.opt.uri_path = (self.topic,)
         request.opt.observe = 0
         request.remote = (ip_address(self.host), self.port)
@@ -89,8 +90,8 @@ class coapSubcribe(object):
         d.addErrback(self.noResponse)
 
     def printLaterResponse(self, response):
-        print('CoAP:\n' + response.payload)
-        socketio.emit('coap_echo', {'payload': response.payload}, broadcast = True, namespace = '/socket_test')
+        print('=====================\nCoAP:\n'+self.topic+"\n"+str(response.payload)+'\n=====================')
+        socketio.emit(self.topic, {'payload': response.payload}, broadcast = True, namespace = '/socket_test')
 
     def noResponse(self, failure):
         print('Failed to fetch resource:')
@@ -154,11 +155,13 @@ def homepage():
 		if validation:
 			if not empty_1:
 				mqtt_sub = mqttSubscribe()
+				global mqtt_thread
 				mqtt_thread = Thread(target = mqtt_sub.subscribe, args = [host_1, port_1, topic_1])
 				mqtt_thread.start()				
 			if not empty_2:
 				# coap_sub = coapSubcribe(host_2, port_2, topic_2)
 				coap_sub = coapSubcribe()
+				global coap_thread
 				coap_thread = Thread(target = coap_sub.subscribe, args = [host_2, port_2, topic_2])
 				coap_thread.start()
 
