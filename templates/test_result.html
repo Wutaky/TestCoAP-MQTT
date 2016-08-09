@@ -1,77 +1,190 @@
 {% extends "layout.html" %}
+{% block css %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/nv.d3.css') }}">
+<style>
+	svg {
+		display: block;
+	}
+	#chart-field {
+		height: 500px;
+		width: 100%;
+	}
+</style>
+{% endblock %}
+
 {% block script %}
+<script charset="utf-8" src="{{ url_for('static', filename='js/d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/nv.d3.min.js') }}"></script>
+
 <script type="text/javascript" charset="utf-8">
+	var livedata = [
+    {
+        'key': 'MQTT',
+        'values': [ [ Date.now() , 0] ]
+    }, 
+    {
+        'key': 'CoAP',
+        'values': [ [ Date.now() , 0] ]
+    }
+    ].map(function(series) {
+        series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
+        return series;
+    });
+
+
 	$(document).ready(function(){
 		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket_test');
 		socket.on('{{ result.topic_1 }}', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
-            $('#output_1').html(message);
-        });
-        socket.on('{{ result.topic_2 }}', function(msg) {
+			$('#output_1').html(message);
+
+			if (livedata[0].values.length > 100) {
+				livedata[0].values.shift();
+			}
+			livedata[0].values.push({
+				series: 0,
+				x: Date.now(),
+				y: Math.random() * 100
+			});
+
+		});
+		socket.on('{{ result.topic_2 }}', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
-            $('#output_2').html(message);
-        });
+			$('#output_2').html(message);
+
+			if (livedata[1].values.length > 100) {
+				livedata[1].values.shift();
+			}
+			livedata[1].values.push({
+				series: 1,
+				x: Date.now(),
+				y: Math.random() * 100
+			});
+
+		});
 	});
+
+    
+    var chart;
+    nv.addGraph(function() {
+        chart = nv.models.lineWithFocusChart()
+            .margin({top: 50, right: 80, bottom: 30, left: 80})
+            .color(d3.scale.category10().range())
+            .useInteractiveGuideline(true)
+            .rightAlignYAxis(true);
+
+        chart.xAxis.tickFormat(function(d) {
+            return d3.time.format('%X')(new Date(d))
+        }).axisLabel("Time").showMaxMin(false);
+
+        chart.x2Axis.tickFormat(function(d) {
+            return d3.time.format('%X')(new Date(d))
+        }).showMaxMin(false);
+
+        chart.yTickFormat(function(d) { return d3.format(',f')(d) + ' bytes' });
+
+        d3.select('#chart-field svg')
+            .datum(livedata)
+            .transition()
+            .call(chart);
+
+        nv.utils.windowResize(chart.update);
+
+        return chart;
+    });
+
+    var run = true;
+    setInterval(function() {
+        if (!run) return;
+
+        chart.update();
+    }, 500);
+
+    // d3.select("#start-stop-button").on("click",function() {
+    //     run = !run;
+    // });
 </script>
 {% endblock %}
 
 {% block content %}
 <div class="row">
-	{% if not result.empty_1 %}
-		<h3>Resource #1</h3>
-		<div class="col-md-3">
-			<h4>Protocol:</h4>
-			<p>MQTT</p>
+	<ul class="nav nav-tabs" role="tablist">
+		<li role="presentation" class="active"><a href="#message-field" aria-controls="home" role="tab" data-toggle="tab">Message</a></li>
+		<li role="presentation"><a href="#chart-field" aria-controls="chart-field" role="tab" data-toggle="tab">Chart</a></li>
+	</ul>
+
+	<div class="tab-content">
+		<div role="tabpanel" class="tab-pane active" id="message-field">			
+			<div class="row">
+				{% if not result.empty_1 %}
+					<h3>Resource #1</h3>
+					<div class="col-md-3">
+						<h4>Protocol:</h4>
+						<p>MQTT</p>
+					</div>
+					<div class="col-md-3">
+						<h4>Host:</h4>
+						<p>{{ result.host_1 }}</p>
+					</div>
+					<div class="col-md-3">
+						<h4>Port:</h4>
+						<p>{{ result.port_1 }}</p>
+					</div>
+					<div class="col-md-3">
+						<h4>Topic:</h4>
+						<p>{{ result.topic_1 }}</p>
+					</div>
+					<div class="col-md-12">
+						<h4>Message:</h4>
+						<p><div id="output_1"></div></p>
+						<div class="border-row" style="margin-bottom: 50px;"></div>
+					</div>
+				{% endif %}
+				
+				{% if not result.empty_2 %}		
+					<h3>Resource #2</h3>
+					<div class="col-md-3">
+						<h4>Protocol:</h4>
+						<p>CoAP</p>
+					</div>
+					<div class="col-md-3">
+						<h4>Host:</h4>
+						<p>{{ result.host_2 }}</p>
+					</div>
+					<div class="col-md-3">
+						<h4>Port:</h4>
+						<p>{{ result.port_2 }}</p>
+					</div>
+					<div class="col-md-3">
+						<h4>Topic:</h4>
+						<p>{{ result.topic_2 }}</p>
+					</div>
+					<div class="col-md-12">
+						<h4>Message:</h4>
+						<p><div id="output_2"></div></p>
+					</div>
+				{% endif %}
+			</div>
 		</div>
-		<div class="col-md-3">
-			<h4>Host:</h4>
-			<p>{{ result.host_1 }}</p>
+
+
+		<div role="tabpanel" class="tab-pane" id="chart-field">
+			<svg></svg>
+			<div align="center">
+				<div class="border-row" style="margin-bottom: 30px;"></div>
+				<button type="button" class="btn btn-default" id="start-stop-button" onclick="run = !run; chart.update();">Start/Stop Graphing</button>
+			</div>
 		</div>
-		<div class="col-md-3">
-			<h4>Port:</h4>
-			<p>{{ result.port_1 }}</p>
-		</div>
-		<div class="col-md-3">
-			<h4>Topic:</h4>
-			<p>{{ result.topic_1 }}</p>
-		</div>
-		<div class="col-md-12">
-			<h4>Message:</h4>
-			<p><div id="output_1"></div></p>
-			<div class="border-row" style="margin-bottom: 50px;"></div>
-		</div>
-	{% endif %}
-	
-	{% if not result.empty_2 %}		
-		<h3>Resource #2</h3>
-		<div class="col-md-3">
-			<h4>Protocol:</h4>
-			<p>CoAP</p>
-		</div>
-		<div class="col-md-3">
-			<h4>Host:</h4>
-			<p>{{ result.host_2 }}</p>
-		</div>
-		<div class="col-md-3">
-			<h4>Port:</h4>
-			<p>{{ result.port_2 }}</p>
-		</div>
-		<div class="col-md-3">
-			<h4>Topic:</h4>
-			<p>{{ result.topic_2 }}</p>
-		</div>
-		<div class="col-md-12">
-			<h4>Message:</h4>
-			<p><div id="output_2"></div></p>
-		</div>
-	{% endif %}
-</div>
-<div class="row">
-	<div class="border-row" style="margin-bottom: 30px;"></div>
-	<div class="col-md-12">
-		<div class="col-md-3 col-md-offset-3"></div>
-		<div class="col-md-3 col-md-offset-3">
-			<a href="{{ url_for('unsubscribe') }}"><button type="button" class="btn btn-danger">Unsubscribe All</button></a>
+
+
+		<div class="row">
+			<div class="border-row" style="margin-bottom: 80px;"></div>
+			<div class="col-md-12">
+				<div class="col-md-3 col-md-offset-3"></div>
+				<div class="col-md-3 col-md-offset-3">
+					<a href="{{ url_for('unsubscribe') }}"><button type="button" class="btn btn-danger">Unsubscribe All</button></a>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

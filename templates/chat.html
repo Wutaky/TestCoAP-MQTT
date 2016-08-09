@@ -3,11 +3,11 @@
 <script type="text/javascript" charset="utf-8">
 	$(document).ready(function(){
 	    var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket_test');
-	    socket.on('coap_echo', function(msg) {
+	    socket.on('{{ channel }}', function(msg) {
             $('#output').append('<br>' + $('<div/>').text('Received: ' + msg.payload).html());
         });
 	    $('form#broadcast').submit(function(event) {
-            socket.emit('send_message', {data: $('#broadcast_data').val()});
+            socket.emit('send_message', {data: $('#broadcast_data').val(), channel: '{{ channel }}'});
             return false;
         });
 	});

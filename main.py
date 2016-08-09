@@ -11,7 +11,6 @@ from flask_socketio import SocketIO, emit
 import paho.mqtt.client as mqtt
 
 from twisted.internet import reactor
-from twisted.python import log
 
 import txthings.coap as coap
 import txthings.resource as resource
@@ -50,20 +49,6 @@ class mqttSubscribe(object):
 
 
 class coapSubcribe(object):
-    # def __init__(self, host, port, topic):
-    # 	# log.startLogging(sys.stdout)
-    	
-    # 	endpoint = resource.Endpoint(None)
-    # 	protocol = coap.Coap(endpoint)
-    #     self.protocol = protocol
-    #     self.host = host
-    #     self.port = port
-    #     self.topic = topic
-
-    #     reactor.listenUDP(61616, protocol)        
-    #     reactor.callLater(0, self.requestResource)
-    #     reactor.run()
-
     endpoint = resource.Endpoint(None)
     protocol = coap.Coap(endpoint)
     host = ''
@@ -159,7 +144,6 @@ def homepage():
 				mqtt_thread = Thread(target = mqtt_sub.subscribe, args = [host_1, port_1, topic_1])
 				mqtt_thread.start()				
 			if not empty_2:
-				# coap_sub = coapSubcribe(host_2, port_2, topic_2)
 				coap_sub = coapSubcribe()
 				global coap_thread
 				coap_thread = Thread(target = coap_sub.subscribe, args = [host_2, port_2, topic_2])
@@ -172,15 +156,15 @@ def homepage():
 		return render_template('test.html', result = {})
 
 
-@app.route('/chat/', methods = ['GET'])
-def chat():
-	return render_template('chat.html')
+@app.route('/chat/<path:channel>/', methods = ['GET'])
+def chat(channel = 'default'):
+	return render_template('chat.html', channel = channel)
 
 
 @socketio.on('send_message', namespace = '/socket_test')
 def testMessage(message):
     import datetime
-    emit('coap_echo', {'payload': datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S") + ' :: ' + message['data']}, broadcast = True)
+    emit(message['channel'], {'payload': datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S") + ' :: ' + message['data']}, broadcast = True)
 
 
 if __name__ == '__main__':
