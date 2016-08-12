@@ -33,7 +33,7 @@
 <script src="{{ url_for('static', filename='js/nv.d3.min.js') }}"></script>
 
 <script type="text/javascript" charset="utf-8">
-	var livedata = [
+	var liveData = [
     {
         'key': 'MQTT',
         'values': [ [ Date.now(), 0] ]
@@ -48,7 +48,7 @@
     });
 
 
-    var totaldata = [
+    var totalData = [
     {
         'key': 'Accumulative Data',
         'values': [ ['CoAP ( Observe )', 0],  ['MQTT ( QoS 1 )', 0], ['MQTT ( QoS 2 )', 0] ]
@@ -59,34 +59,34 @@
     });
 
 
-    var packetdata = [
+    var packetData = [
     {
         'key': 'Ethernet',
-        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+        'values': [ ['MQTT ( QoS 1 )', 0], ['CoAP ( Observe )', 0] ]
     }, 
     {
         'key': 'Internet Protocol',
-        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+        'values': [ ['MQTT ( QoS 1 )', 0], ['CoAP ( Observe )', 0] ]
     },
     {
         'key': 'TCP',
-        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+        'values': [ ['MQTT ( QoS 1 )', 0], ['CoAP ( Observe )', 0] ]
     },
     {
         'key': 'UDP',
-        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+        'values': [ ['MQTT ( QoS 1 )', 0], ['CoAP ( Observe )', 0] ]
     },
     {
         'key': 'Message Header',
-        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+        'values': [ ['MQTT ( QoS 1 )', 0], ['CoAP ( Observe )', 0] ]
     },
     {
         'key': 'Message Options',
-        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+        'values': [ ['MQTT ( QoS 1 )', 0], ['CoAP ( Observe )', 0] ]
     },
     {
         'key': 'Message Payload',
-        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+        'values': [ ['MQTT ( QoS 1 )', 0], ['CoAP ( Observe )', 0] ]
     }
     ].map(function(series) {
         series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
@@ -94,7 +94,7 @@
     });
 
 
-    var mqttpacket = [
+    var mqttPacket = [
     {
         'key': 'Ethernet',
         'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
@@ -137,128 +137,142 @@
     });
 
 
-    var coappacket = [
+    var coapPacket = [
     {
         'key': 'CON',
-        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+        'values': [ ['Single GET', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( Ethernet )',
-        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+        'values': [ ['Single GET', 0], ['Observe', 0] ]
     }, 
     {
         'key': 'CON ( Internet Protocol )',
-        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+        'values': [ ['Single GET', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( UDP )',
-        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+        'values': [ ['Single GET', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( Header )',
-        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+        'values': [ ['Single GET', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( Option )',
-        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+        'values': [ ['Single GET', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( Payload )',
-        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+        'values': [ ['Single GET', 0], ['Observe', 0] ]
     },
     {
         'key': 'ACK',
-        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+        'values': [ ['Single GET', 0], ['Observe', 0] ]
     }
     ].map(function(series) {
         series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
         return series;
     });
 
-
+    var lastCoAPPayload = { 'time': 0, 'payload': '' };
+    var coapCount = 0;
+    var mqttCount = 0;
 	$(document).ready(function(){
 		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket_test');
 		socket.on('{{ result.topic_1 }}', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
 			$('#output_1').html(message);
 
-			if (livedata[0].values.length > 100) {
-				livedata[0].values.shift();
+			if (liveData[0].values.length > 99) {
+				liveData[0].values.shift();
 			}
-			livedata[0].values.push({
+			liveData[0].values.push({
 				series: 0,
 				x: Date.now(),
-				y: Math.random() * 100
+				y: msg.payload.length + '{{ result.topic_1 }}'.length + 2 + 56 + 58
 			});
 
-	        packetdata[0].values[0].y = 14;
-	        packetdata[1].values[0].y = 20;
-	        packetdata[2].values[0].y = 20;
-	        packetdata[4].values[0].y = 2;
-			packetdata[6].values[0].y = msg.payload.length + '{{ result.topic_1 }}'.length + 2;
+	        packetData[0].values[0].y = 14;
+	        packetData[1].values[0].y = 20;
+	        packetData[2].values[0].y = 20;
+	        packetData[4].values[0].y = 2;
+			packetData[6].values[0].y = msg.payload.length + '{{ result.topic_1 }}'.length + 2;
 
 
-			mqttpacket[0].values[0].y = 14;
-			mqttpacket[1].values[0].y = 20;
-	        mqttpacket[2].values[0].y = 20;
-	        mqttpacket[3].values[0].y = 2;
-	        mqttpacket[4].values[0].y = msg.payload.length + '{{ result.topic_1 }}'.length + 2;
+			mqttPacket[0].values[0].y = 14;
+			mqttPacket[1].values[0].y = 20;
+	        mqttPacket[2].values[0].y = 20;
+	        mqttPacket[3].values[0].y = 2;
+	        mqttPacket[4].values[0].y = msg.payload.length + '{{ result.topic_1 }}'.length + 2;
 
-	        mqttpacket[0].values[1].y = 14;
-			mqttpacket[1].values[1].y = 20;
-	        mqttpacket[2].values[1].y = 20;
-	        mqttpacket[3].values[1].y = 2;
-	        mqttpacket[4].values[1].y = msg.payload.length + '{{ result.topic_1 }}'.length + 4;
-	        mqttpacket[5].values[1].y = 58;
+	        mqttPacket[0].values[1].y = 14;
+			mqttPacket[1].values[1].y = 20;
+	        mqttPacket[2].values[1].y = 20;
+	        mqttPacket[3].values[1].y = 2;
+	        mqttPacket[4].values[1].y = msg.payload.length + '{{ result.topic_1 }}'.length + 4;
+	        mqttPacket[5].values[1].y = 58;
 
-	        mqttpacket[0].values[2].y = 14;
-			mqttpacket[1].values[2].y = 20;
-	        mqttpacket[2].values[2].y = 20;
-	        mqttpacket[3].values[2].y = 2;
-	        mqttpacket[4].values[2].y = msg.payload.length + '{{ result.topic_1 }}'.length + 4;
-	        mqttpacket[6].values[2].y = 58;
-	        mqttpacket[7].values[2].y = 60;
-	        mqttpacket[8].values[2].y = 58;
+	        mqttPacket[0].values[2].y = 14;
+			mqttPacket[1].values[2].y = 20;
+	        mqttPacket[2].values[2].y = 20;
+	        mqttPacket[3].values[2].y = 2;
+	        mqttPacket[4].values[2].y = msg.payload.length + '{{ result.topic_1 }}'.length + 4;
+	        mqttPacket[6].values[2].y = 58;
+	        mqttPacket[7].values[2].y = 60;
+	        mqttPacket[8].values[2].y = 58;
 
 
-	        totaldata[0].values[1].y += msg.payload.length + 4 + 56 + 58;
-	        totaldata[0].values[2].y += msg.payload.length + 4 + 56 + 58 + 60 +58;
+	        totalData[0].values[1].y += msg.payload.length + '{{ result.topic_1 }}'.length + 4 + 56 + 58;
+	        totalData[0].values[2].y += msg.payload.length + '{{ result.topic_1 }}'.length + 4 + 56 + 58 + 60 +58;
+	        mqttCount ++ ;
+	        $('#mqttReceived').html(mqttCount);
 
 		});
 		socket.on('{{ result.topic_2 }}', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
 			$('#output_2').html(message);
 
-			if (livedata[1].values.length > 100) {
-				livedata[1].values.shift();
+			var flag = false;
+			if (lastCoAPPayload.payload == '' || lastCoAPPayload.payload != msg.payload || lastCoAPPayload.payload == msg.payload && Date.now() - lastCoAPPayload.time >= 8000) {
+				lastCoAPPayload.time = Date.now();
+				lastCoAPPayload.payload = msg.payload;
+				flag = true;
 			}
-			livedata[1].values.push({
-				series: 1,
-				x: Date.now(),
-				y: Math.random() * 100
-			});
 
-	        packetdata[0].values[1].y = 14;
-	        packetdata[1].values[1].y = 20;
-	        packetdata[3].values[1].y = 8;
-	        packetdata[4].values[1].y = 4;
-	        packetdata[5].values[1].y = 10;
-			packetdata[6].values[1].y = msg.payload.length;
+			if (flag) {
+				if (liveData[1].values.length > 99) {
+					liveData[1].values.shift();
+				}
+				liveData[1].values.push({
+					series: 1,
+					x: Date.now(),
+					y: msg.payload.length + 56 + 46
+				});
 
+				totalData[0].values[0].y += msg.payload.length + 56 + 46;
+				coapCount ++ ;
+				$('#coapReceived').html(coapCount);
+			}
 
-			coappacket[0].values[0].y = 63;
-			coappacket[7].values[0].y = 115;
-
-	        coappacket[1].values[1].y = 14;
-	        coappacket[2].values[1].y = 20;
-	        coappacket[3].values[1].y = 8;
-	        coappacket[4].values[1].y = 4;
-	        coappacket[5].values[1].y = 10;
-			coappacket[6].values[1].y = msg.payload.length;
-			coappacket[7].values[1].y = 46;
+	        packetData[0].values[1].y = 14;
+	        packetData[1].values[1].y = 20;
+	        packetData[3].values[1].y = 8;
+	        packetData[4].values[1].y = 4;
+	        packetData[5].values[1].y = 10;
+			packetData[6].values[1].y = msg.payload.length;
 
 
-			totaldata[0].values[0].y += msg.payload.length + 56 + 46;
+			coapPacket[0].values[0].y = 63;
+			coapPacket[7].values[0].y = 115;
+
+	        coapPacket[1].values[1].y = 14;
+	        coapPacket[2].values[1].y = 20;
+	        coapPacket[3].values[1].y = 8;
+	        coapPacket[4].values[1].y = 4;
+	        coapPacket[5].values[1].y = 10;
+			coapPacket[6].values[1].y = msg.payload.length;
+			coapPacket[7].values[1].y = 46;			
 		});
 	});
 
@@ -273,7 +287,9 @@
             .margin({top: 50, right: 80, bottom: 30, left: 80})
             .color(d3.scale.category10().range())
             .useInteractiveGuideline(true)
-            .rightAlignYAxis(true);
+            .rightAlignYAxis(true)
+            .interpolate("step")
+        ;
 
         chart_1.xAxis.tickFormat(function(d) {
             return d3.time.format('%X')(new Date(d))
@@ -286,7 +302,7 @@
         chart_1.yTickFormat(function(d) { return d3.format(',f')(d) + ' bytes' });
 
         d3.select('#chart-1-field svg')
-            .datum(livedata)
+            .datum(liveData)
             .transition()
             .call(chart_1);
 
@@ -318,7 +334,7 @@
         ;
 
         d3.select('#chart-2-field svg')
-            .datum(packetdata)
+            .datum(packetData)
             .call(chart_2);
 
         nv.utils.windowResize(chart_2.update);
@@ -349,7 +365,7 @@
         ;
 
         d3.select('#chart-3-field svg')
-            .datum(mqttpacket)
+            .datum(mqttPacket)
             .call(chart_3);
 
         nv.utils.windowResize(chart_3.update);
@@ -380,7 +396,7 @@
         ;
 
         d3.select('#chart-4-field svg')
-            .datum(coappacket)
+            .datum(coapPacket)
             .call(chart_4);
 
         nv.utils.windowResize(chart_4.update);
@@ -391,7 +407,7 @@
 
 	nv.addGraph(function() {
         chart_5 = nv.models.multiBarChart()
-            .margin({top: 50, bottom: 20, left: 130})
+            .margin({top: 50, bottom: 50, left: 130})
             .groupSpacing(0.5)
             .useInteractiveGuideline(true)
             .stacked(true)
@@ -412,7 +428,7 @@
         ;
 
         d3.select('#chart-5-field svg')
-            .datum(totaldata)
+            .datum(totalData)
             .call(chart_5);
 
         nv.utils.windowResize(chart_5.update);
@@ -420,17 +436,43 @@
         return chart_5;
     });
 
+    
+    setInterval(function() {
+        var len_1 = liveData[0].values.length        
+        if (Date.now() - liveData[0].values[len_1 - 1].y >= 900) {
+        	if (len_1 > 99) {
+				liveData[0].values.shift();
+			}
+			liveData[0].values.push({
+				series: 0,
+				x: Date.now(),
+				y: 0
+			});
+        }
+
+        var len_2 = liveData[1].values.length        
+        if (Date.now() - liveData[1].values[len_2 - 1].y >= 900) {
+        	if (len_2 > 99) {
+				liveData[1].values.shift();
+			}
+			liveData[1].values.push({
+				series: 1,
+				x: Date.now(),
+				y: 0
+			});
+        }        
+    }, 1000);
 
     var run = true;
     setInterval(function() {
-        if (!run) return;
+    	if (!run) return;
 
-        chart_1.update();
+    	chart_1.update();
         chart_2.update();
         chart_3.update();
         chart_4.update();
         chart_5.update();
-    }, 500);
+    }, 1000);
 
     // d3.select("#start-stop-button").on("click",function() {
     //     run = !run;
@@ -442,10 +484,10 @@
 <div class="row">
 	<ul class="nav nav-tabs" role="tablist">
 		<li role="presentation" class="active"><a href="#message-field" role="tab" data-toggle="tab">Message</a></li>
-		<li role="presentation"><a href="#chart-1-field" role="tab" data-toggle="tab">Chart</a></li>
+		<li role="presentation"><a href="#chart-1-field" role="tab" data-toggle="tab">Real-time Transaction</a></li>
 		<li role="presentation"><a href="#chart-3-field" role="tab" data-toggle="tab">MQTT Packet</a></li>
 		<li role="presentation"><a href="#chart-4-field" role="tab" data-toggle="tab">CoAP Packet</a></li>
-		<li role="presentation"><a href="#chart-2-field" role="tab" data-toggle="tab">Comparison</a></li>
+		<li role="presentation"><a href="#chart-2-field" role="tab" data-toggle="tab">Packet Comparison</a></li>
 		<li role="presentation"><a href="#chart-5-field" role="tab" data-toggle="tab">Accumulation</a></li>
 	</ul>
 
@@ -526,17 +568,27 @@
 
 		<div role="tabpanel" class="tab-pane" id="chart-5-field">
 			<svg></svg>
+			<div class="row">
+				<div class="col-md-3"></div>
+				<div class="col-md-3">
+					<p>CoAP: <span id="coapReceived">0</span> messages received</p>
+				</div>
+				<div class="col-md-3">
+					<p>MQTT: <span id="mqttReceived">0</span> messages received</p>
+				</div>
+				<div class="col-md-3"></div>
+			</div>
 		</div>
 
 
 		<div class="row">			
 			<div class="border-row" style="margin-bottom: 80px;"></div>
-			<div class="col-md-12">
+			<!-- <div class="col-md-12"> -->
 				<div class="col-md-3 col-md-offset-3"></div>
 				<div class="col-md-3 col-md-offset-3">
 					<a href="{{ url_for('unsubscribe') }}"><button type="button" class="btn btn-danger">Unsubscribe All</button></a>
 				</div>
-			</div>
+			<!-- </div> -->
 		</div>
 	</div>
 </div>

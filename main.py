@@ -37,7 +37,7 @@ class mqttSubscribe(object):
 
 	def subscribe(self, host, port, topic):
 		self.mqttc.connect(host, port)
-		self.mqttc.subscribe(topic, 0)
+		self.mqttc.subscribe(topic, 1)
 		self.mqttc.loop_start()
 
 	def unsubscribe(self):
