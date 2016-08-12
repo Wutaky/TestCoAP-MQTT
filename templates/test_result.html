@@ -5,7 +5,23 @@
 	svg {
 		display: block;
 	}
-	#chart-field {
+	#chart-1-field {
+		height: 500px;
+		width: 100%;
+	}
+	#chart-2-field {
+		height: 500px;
+		width: 100%;
+	}
+	#chart-3-field {
+		height: 500px;
+		width: 100%;
+	}
+	#chart-4-field {
+		height: 500px;
+		width: 100%;
+	}
+	#chart-5-field {
 		height: 500px;
 		width: 100%;
 	}
@@ -20,11 +36,139 @@
 	var livedata = [
     {
         'key': 'MQTT',
-        'values': [ [ Date.now() , 0] ]
+        'values': [ [ Date.now(), 0] ]
     }, 
     {
         'key': 'CoAP',
-        'values': [ [ Date.now() , 0] ]
+        'values': [ [ Date.now(), 0] ]
+    }
+    ].map(function(series) {
+        series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
+        return series;
+    });
+
+
+    var totaldata = [
+    {
+        'key': 'Accumulative Data',
+        'values': [ ['CoAP ( Observe )', 0],  ['MQTT ( QoS 1 )', 0], ['MQTT ( QoS 2 )', 0] ]
+    }
+    ].map(function(series) {
+        series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
+        return series;
+    });
+
+
+    var packetdata = [
+    {
+        'key': 'Ethernet',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+    }, 
+    {
+        'key': 'Internet Protocol',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+    },
+    {
+        'key': 'TCP',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+    },
+    {
+        'key': 'UDP',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+    },
+    {
+        'key': 'Message Header',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+    },
+    {
+        'key': 'Message Options',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+    },
+    {
+        'key': 'Message Payload',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+    }
+    ].map(function(series) {
+        series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
+        return series;
+    });
+
+
+    var mqttpacket = [
+    {
+        'key': 'Ethernet',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    }, 
+    {
+        'key': 'Internet Protocol',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    },
+    {
+        'key': 'TCP',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    },
+    {
+        'key': 'Message Header',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    },
+    {
+        'key': 'Message Payload',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    },
+    {
+        'key': 'Publish ACK',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    },
+    {
+        'key': 'Publish Received',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    },
+    {
+        'key': 'Publish Release',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    },
+    {
+        'key': 'Publish Complete',
+        'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
+    }
+    ].map(function(series) {
+        series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
+        return series;
+    });
+
+
+    var coappacket = [
+    {
+        'key': 'CON',
+        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+    },
+    {
+        'key': 'CON ( Ethernet )',
+        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+    }, 
+    {
+        'key': 'CON ( Internet Protocol )',
+        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+    },
+    {
+        'key': 'CON ( UDP )',
+        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+    },
+    {
+        'key': 'CON ( Header )',
+        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+    },
+    {
+        'key': 'CON ( Option )',
+        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+    },
+    {
+        'key': 'CON ( Payload )',
+        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
+    },
+    {
+        'key': 'ACK',
+        'values': [ ['CoAP ( Single GET )', 0], ['CoAP ( Observe )', 0] ]
     }
     ].map(function(series) {
         series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
@@ -47,6 +191,39 @@
 				y: Math.random() * 100
 			});
 
+	        packetdata[0].values[0].y = 14;
+	        packetdata[1].values[0].y = 20;
+	        packetdata[2].values[0].y = 20;
+	        packetdata[4].values[0].y = 2;
+			packetdata[6].values[0].y = msg.payload.length + '{{ result.topic_1 }}'.length + 2;
+
+
+			mqttpacket[0].values[0].y = 14;
+			mqttpacket[1].values[0].y = 20;
+	        mqttpacket[2].values[0].y = 20;
+	        mqttpacket[3].values[0].y = 2;
+	        mqttpacket[4].values[0].y = msg.payload.length + '{{ result.topic_1 }}'.length + 2;
+
+	        mqttpacket[0].values[1].y = 14;
+			mqttpacket[1].values[1].y = 20;
+	        mqttpacket[2].values[1].y = 20;
+	        mqttpacket[3].values[1].y = 2;
+	        mqttpacket[4].values[1].y = msg.payload.length + '{{ result.topic_1 }}'.length + 4;
+	        mqttpacket[5].values[1].y = 58;
+
+	        mqttpacket[0].values[2].y = 14;
+			mqttpacket[1].values[2].y = 20;
+	        mqttpacket[2].values[2].y = 20;
+	        mqttpacket[3].values[2].y = 2;
+	        mqttpacket[4].values[2].y = msg.payload.length + '{{ result.topic_1 }}'.length + 4;
+	        mqttpacket[6].values[2].y = 58;
+	        mqttpacket[7].values[2].y = 60;
+	        mqttpacket[8].values[2].y = 58;
+
+
+	        totaldata[0].values[1].y += msg.payload.length + 4 + 56 + 58;
+	        totaldata[0].values[2].y += msg.payload.length + 4 + 56 + 58 + 60 +58;
+
 		});
 		socket.on('{{ result.topic_2 }}', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
@@ -61,43 +238,198 @@
 				y: Math.random() * 100
 			});
 
+	        packetdata[0].values[1].y = 14;
+	        packetdata[1].values[1].y = 20;
+	        packetdata[3].values[1].y = 8;
+	        packetdata[4].values[1].y = 4;
+	        packetdata[5].values[1].y = 10;
+			packetdata[6].values[1].y = msg.payload.length;
+
+
+			coappacket[0].values[0].y = 63;
+			coappacket[7].values[0].y = 115;
+
+	        coappacket[1].values[1].y = 14;
+	        coappacket[2].values[1].y = 20;
+	        coappacket[3].values[1].y = 8;
+	        coappacket[4].values[1].y = 4;
+	        coappacket[5].values[1].y = 10;
+			coappacket[6].values[1].y = msg.payload.length;
+			coappacket[7].values[1].y = 46;
+
+
+			totaldata[0].values[0].y += msg.payload.length + 56 + 46;
 		});
 	});
 
     
-    var chart;
+    var chart_1;
+    var chart_2;
+    var chart_3;
+    var chart_4;
+    var chart_5;
     nv.addGraph(function() {
-        chart = nv.models.lineWithFocusChart()
+        chart_1 = nv.models.lineWithFocusChart()
             .margin({top: 50, right: 80, bottom: 30, left: 80})
             .color(d3.scale.category10().range())
             .useInteractiveGuideline(true)
             .rightAlignYAxis(true);
 
-        chart.xAxis.tickFormat(function(d) {
+        chart_1.xAxis.tickFormat(function(d) {
             return d3.time.format('%X')(new Date(d))
         }).axisLabel("Time").showMaxMin(false);
 
-        chart.x2Axis.tickFormat(function(d) {
+        chart_1.x2Axis.tickFormat(function(d) {
             return d3.time.format('%X')(new Date(d))
         }).showMaxMin(false);
 
-        chart.yTickFormat(function(d) { return d3.format(',f')(d) + ' bytes' });
+        chart_1.yTickFormat(function(d) { return d3.format(',f')(d) + ' bytes' });
 
-        d3.select('#chart-field svg')
+        d3.select('#chart-1-field svg')
             .datum(livedata)
             .transition()
-            .call(chart);
+            .call(chart_1);
 
-        nv.utils.windowResize(chart.update);
+        nv.utils.windowResize(chart_1.update);
 
-        return chart;
+        return chart_1;
     });
+
+    
+    nv.addGraph(function() {
+        chart_2 = nv.models.multiBarChart()
+            .margin({top: 50, bottom: 20, left: 120})
+            .groupSpacing(0.5)
+            .useInteractiveGuideline(true)
+            .stacked(true)
+            .reduceXTicks(false)
+            .showLegend(false)
+        ;
+
+        chart_2.xAxis
+            .axisLabelDistance(30)
+            .showMaxMin(true)
+        ;
+
+        chart_2.yAxis
+            .axisLabel("Bytes Transferred")
+            .axisLabelDistance(30)
+            .tickFormat(function(d) {return d3.format(',f')(d) + ' Bytes'})
+        ;
+
+        d3.select('#chart-2-field svg')
+            .datum(packetdata)
+            .call(chart_2);
+
+        nv.utils.windowResize(chart_2.update);
+
+        return chart_2;
+    });
+
+
+	nv.addGraph(function() {
+        chart_3 = nv.models.multiBarChart()
+            .margin({top: 50, bottom: 20, left: 100})
+            .groupSpacing(0.5)
+            .useInteractiveGuideline(true)
+            .stacked(true)
+            .reduceXTicks(false)
+            .showLegend(false)
+        ;
+
+        chart_3.xAxis
+            .axisLabelDistance(30)
+            .showMaxMin(true)
+        ;
+
+        chart_3.yAxis
+            .axisLabel("Bytes Transferred")
+            .axisLabelDistance(30)
+            .tickFormat(function(d) {return d3.format(',f')(d) + ' Bytes'})
+        ;
+
+        d3.select('#chart-3-field svg')
+            .datum(mqttpacket)
+            .call(chart_3);
+
+        nv.utils.windowResize(chart_3.update);
+
+        return chart_3;
+    });
+
+
+	nv.addGraph(function() {
+        chart_4 = nv.models.multiBarChart()
+            .margin({top: 50, bottom: 20, left: 100})
+            .groupSpacing(0.5)
+            .useInteractiveGuideline(true)
+            .stacked(true)
+            .reduceXTicks(false)
+            .showLegend(false)
+        ;
+
+        chart_4.xAxis
+            .axisLabelDistance(30)
+            .showMaxMin(true)
+        ;
+
+        chart_4.yAxis
+            .axisLabel("Bytes Transferred")
+            .axisLabelDistance(30)
+            .tickFormat(function(d) {return d3.format(',f')(d) + ' Bytes'})
+        ;
+
+        d3.select('#chart-4-field svg')
+            .datum(coappacket)
+            .call(chart_4);
+
+        nv.utils.windowResize(chart_4.update);
+
+        return chart_4;
+    });
+
+
+	nv.addGraph(function() {
+        chart_5 = nv.models.multiBarChart()
+            .margin({top: 50, bottom: 20, left: 130})
+            .groupSpacing(0.5)
+            .useInteractiveGuideline(true)
+            .stacked(true)
+            .reduceXTicks(false)
+            .showLegend(false)
+            .showControls(false)
+        ;
+
+        chart_5.xAxis
+            .axisLabelDistance(30)
+            .showMaxMin(true)
+        ;
+
+        chart_5.yAxis
+            .axisLabel("Bytes Transferred")
+            .axisLabelDistance(50)
+            .tickFormat(function(d) {return d3.format(',f')(d) + ' Bytes'})
+        ;
+
+        d3.select('#chart-5-field svg')
+            .datum(totaldata)
+            .call(chart_5);
+
+        nv.utils.windowResize(chart_5.update);
+
+        return chart_5;
+    });
+
 
     var run = true;
     setInterval(function() {
         if (!run) return;
 
-        chart.update();
+        chart_1.update();
+        chart_2.update();
+        chart_3.update();
+        chart_4.update();
+        chart_5.update();
     }, 500);
 
     // d3.select("#start-stop-button").on("click",function() {
@@ -109,12 +441,16 @@
 {% block content %}
 <div class="row">
 	<ul class="nav nav-tabs" role="tablist">
-		<li role="presentation" class="active"><a href="#message-field" aria-controls="home" role="tab" data-toggle="tab">Message</a></li>
-		<li role="presentation"><a href="#chart-field" aria-controls="chart-field" role="tab" data-toggle="tab">Chart</a></li>
+		<li role="presentation" class="active"><a href="#message-field" role="tab" data-toggle="tab">Message</a></li>
+		<li role="presentation"><a href="#chart-1-field" role="tab" data-toggle="tab">Chart</a></li>
+		<li role="presentation"><a href="#chart-3-field" role="tab" data-toggle="tab">MQTT Packet</a></li>
+		<li role="presentation"><a href="#chart-4-field" role="tab" data-toggle="tab">CoAP Packet</a></li>
+		<li role="presentation"><a href="#chart-2-field" role="tab" data-toggle="tab">Comparison</a></li>
+		<li role="presentation"><a href="#chart-5-field" role="tab" data-toggle="tab">Accumulation</a></li>
 	</ul>
 
 	<div class="tab-content">
-		<div role="tabpanel" class="tab-pane active" id="message-field">			
+		<div role="tabpanel" class="tab-pane active" id="message-field">
 			<div class="row">
 				{% if not result.empty_1 %}
 					<h3>Resource #1</h3>
@@ -168,16 +504,32 @@
 		</div>
 
 
-		<div role="tabpanel" class="tab-pane" id="chart-field">
+		<div role="tabpanel" class="tab-pane" id="chart-1-field">
 			<svg></svg>
 			<div align="center">
 				<div class="border-row" style="margin-bottom: 30px;"></div>
-				<button type="button" class="btn btn-default" id="start-stop-button" onclick="run = !run; chart.update();">Start/Stop Graphing</button>
+				<button type="button" class="btn btn-default" id="start-stop-button" onclick="run = !run; chart_1.update();">Start/Stop Graphing</button>
 			</div>
 		</div>
 
+		<div role="tabpanel" class="tab-pane" id="chart-3-field">
+			<svg></svg>
+		</div>
 
-		<div class="row">
+		<div role="tabpanel" class="tab-pane" id="chart-4-field">
+			<svg></svg>
+		</div>
+
+		<div role="tabpanel" class="tab-pane" id="chart-2-field">
+			<svg></svg>
+		</div>
+
+		<div role="tabpanel" class="tab-pane" id="chart-5-field">
+			<svg></svg>
+		</div>
+
+
+		<div class="row">			
 			<div class="border-row" style="margin-bottom: 80px;"></div>
 			<div class="col-md-12">
 				<div class="col-md-3 col-md-offset-3"></div>
