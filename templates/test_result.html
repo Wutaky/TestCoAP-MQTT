@@ -175,12 +175,14 @@
         return series;
     });
 
-    var lastCoAPPayload = { 'time': 0, 'payload': '' };
     var coapCount = 0;
     var mqttCount = 0;
+    var mqttPingTime = [];
+    var coapPingTime = [];
 	$(document).ready(function(){
 		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket_test');
-		socket.on('{{ result.topic_1 }}', function(msg) {
+
+		socket.on('MQTT/{{ result.topic_1 }}', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
 			$('#output_1').html(message);
 
@@ -227,33 +229,32 @@
 	        totalData[0].values[2].y += msg.payload.length + '{{ result.topic_1 }}'.length + 4 + 56 + 58 + 60 +58;
 	        mqttCount ++ ;
 	        $('#mqttReceived').html(mqttCount);
-
 		});
-		socket.on('{{ result.topic_2 }}', function(msg) {
+
+		socket.on('MQTT/ping', function(msg) {
+			var latency = msg.latency;
+            mqttPingTime.push(latency);
+            mqttPingTime = mqttPingTime.slice(-30); // keep last 30 samples
+            var sum = 0;
+            for (var i = 0; i < mqttPingTime.length; i ++ )
+                sum += mqttPingTime[i];
+
+            $('#mqttPing').text((Math.round(10 * sum / mqttPingTime.length) / 10).toString() + ' ms');
+		});
+
+		socket.on('CoAP/{{ result.topic_2 }}', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
 			$('#output_2').html(message);
 
-			var flag = false;
-			if (lastCoAPPayload.payload == '' || lastCoAPPayload.payload != msg.payload || lastCoAPPayload.payload == msg.payload && Date.now() - lastCoAPPayload.time >= 8000) {
-				lastCoAPPayload.time = Date.now();
-				lastCoAPPayload.payload = msg.payload;
-				flag = true;
+			if (liveData[1].values.length > 99) {
+				liveData[1].values.shift();
 			}
+			liveData[1].values.push({
+				series: 1,
+				x: Date.now(),
+				y: msg.payload.length + 56 + 46
+			});
 
-			if (flag) {
-				if (liveData[1].values.length > 99) {
-					liveData[1].values.shift();
-				}
-				liveData[1].values.push({
-					series: 1,
-					x: Date.now(),
-					y: msg.payload.length + 56 + 46
-				});
-
-				totalData[0].values[0].y += msg.payload.length + 56 + 46;
-				coapCount ++ ;
-				$('#coapReceived').html(coapCount);
-			}
 
 	        packetData[0].values[1].y = 14;
 	        packetData[1].values[1].y = 20;
@@ -272,7 +273,23 @@
 	        coapPacket[4].values[1].y = 4;
 	        coapPacket[5].values[1].y = 10;
 			coapPacket[6].values[1].y = msg.payload.length;
-			coapPacket[7].values[1].y = 46;			
+			coapPacket[7].values[1].y = 46;
+
+
+			totalData[0].values[0].y += msg.payload.length + 56 + 46;
+			coapCount ++ ;
+			$('#coapReceived').html(coapCount);
+		});
+
+		socket.on('CoAP/ping', function(msg) {
+			var latency = msg.latency;
+            coapPingTime.push(latency);
+            coapPingTime = coapPingTime.slice(-30); // keep last 30 samples
+            var sum = 0;
+            for (var i = 0; i < coapPingTime.length; i ++ )
+                sum += coapPingTime[i];
+
+            $('#coapPing').text((Math.round(10 * sum / coapPingTime.length) / 10).toString() + ' ms');
 		});
 	});
 
@@ -438,29 +455,23 @@
 
     
     setInterval(function() {
-        var len_1 = liveData[0].values.length        
-        if (Date.now() - liveData[0].values[len_1 - 1].y >= 900) {
-        	if (len_1 > 99) {
-				liveData[0].values.shift();
-			}
-			liveData[0].values.push({
-				series: 0,
-				x: Date.now(),
-				y: 0
-			});
-        }
+    	if (liveData[0].values.length > 99) {
+			liveData[0].values.shift();
+		}
+		liveData[0].values.push({
+			series: 0,
+			x: Date.now(),
+			y: 0
+		});
 
-        var len_2 = liveData[1].values.length        
-        if (Date.now() - liveData[1].values[len_2 - 1].y >= 900) {
-        	if (len_2 > 99) {
-				liveData[1].values.shift();
-			}
-			liveData[1].values.push({
-				series: 1,
-				x: Date.now(),
-				y: 0
-			});
-        }        
+    	if (liveData[1].values.length > 99) {
+			liveData[1].values.shift();
+		}
+		liveData[1].values.push({
+			series: 1,
+			x: Date.now(),
+			y: 0
+		});
     }, 1000);
 
     var run = true;
@@ -496,15 +507,15 @@
 			<div class="row">
 				{% if not result.empty_1 %}
 					<h3>Resource #1</h3>
-					<div class="col-md-3">
+					<div class="col-md-2">
 						<h4>Protocol:</h4>
 						<p>MQTT</p>
 					</div>
-					<div class="col-md-3">
+					<div class="col-md-2">
 						<h4>Host:</h4>
 						<p>{{ result.host_1 }}</p>
 					</div>
-					<div class="col-md-3">
+					<div class="col-md-2">
 						<h4>Port:</h4>
 						<p>{{ result.port_1 }}</p>
 					</div>
@@ -512,24 +523,28 @@
 						<h4>Topic:</h4>
 						<p>{{ result.topic_1 }}</p>
 					</div>
+					<div class="col-md-3">
+						<h4>Round-trip Time:</h4>
+						<p><span id="mqttPing">---</span></p>
+					</div>
 					<div class="col-md-12">
 						<h4>Message:</h4>
-						<p><div id="output_1"></div></p>
+						<p><div id="output_1">No Available Data</div></p>
 						<div class="border-row" style="margin-bottom: 50px;"></div>
 					</div>
 				{% endif %}
 				
 				{% if not result.empty_2 %}		
 					<h3>Resource #2</h3>
-					<div class="col-md-3">
+					<div class="col-md-2">
 						<h4>Protocol:</h4>
 						<p>CoAP</p>
 					</div>
-					<div class="col-md-3">
+					<div class="col-md-2">
 						<h4>Host:</h4>
 						<p>{{ result.host_2 }}</p>
 					</div>
-					<div class="col-md-3">
+					<div class="col-md-2">
 						<h4>Port:</h4>
 						<p>{{ result.port_2 }}</p>
 					</div>
@@ -537,9 +552,13 @@
 						<h4>Topic:</h4>
 						<p>{{ result.topic_2 }}</p>
 					</div>
+					<div class="col-md-3">
+						<h4>Round-trip Time:</h4>
+						<p><span id="coapPing">---</span></p>
+					</div>
 					<div class="col-md-12">
 						<h4>Message:</h4>
-						<p><div id="output_2"></div></p>
+						<p><div id="output_2">No Available Data</div></p>
 					</div>
 				{% endif %}
 			</div>
@@ -583,12 +602,10 @@
 
 		<div class="row">			
 			<div class="border-row" style="margin-bottom: 80px;"></div>
-			<!-- <div class="col-md-12"> -->
-				<div class="col-md-3 col-md-offset-3"></div>
-				<div class="col-md-3 col-md-offset-3">
-					<a href="{{ url_for('unsubscribe') }}"><button type="button" class="btn btn-danger">Unsubscribe All</button></a>
-				</div>
-			<!-- </div> -->
+			<div class="col-md-3 col-md-offset-3"></div>
+			<div class="col-md-3 col-md-offset-3">
+				<a href="{{ url_for('unsubscribe') }}"><button type="button" class="btn btn-danger">Unsubscribe All</button></a>
+			</div>
 		</div>
 	</div>
 </div>
