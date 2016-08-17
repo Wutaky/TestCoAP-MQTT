@@ -5,23 +5,7 @@
 	svg {
 		display: block;
 	}
-	#chart-1-field {
-		height: 500px;
-		width: 100%;
-	}
-	#chart-2-field {
-		height: 500px;
-		width: 100%;
-	}
-	#chart-3-field {
-		height: 500px;
-		width: 100%;
-	}
-	#chart-4-field {
-		height: 500px;
-		width: 100%;
-	}
-	#chart-5-field {
+	#chart-1-field, #chart-2-field, #chart-3-field, #chart-4-field, #chart-5-field, #chart-6-field {
 		height: 500px;
 		width: 100%;
 	}
@@ -52,6 +36,17 @@
     {
         'key': 'Accumulative Data',
         'values': [ ['CoAP ( Observe )', 0],  ['MQTT ( QoS 1 )', 0], ['MQTT ( QoS 2 )', 0] ]
+    }
+    ].map(function(series) {
+        series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
+        return series;
+    });
+
+
+    var roundTripTimeData = [
+    {
+        'key': 'Round-trip Time',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
     }
     ].map(function(series) {
         series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
@@ -239,7 +234,7 @@
             for (var i = 0; i < mqttPingTime.length; i ++ )
                 sum += mqttPingTime[i];
 
-            $('#mqttPing').text((Math.round(10 * sum / mqttPingTime.length) / 10).toString() + ' ms');
+            roundTripTimeData[0].values[0].y = Math.round(10 * sum / mqttPingTime.length) / 10;
 		});
 
 		socket.on('CoAP/{{ result.topic_2 }}', function(msg) {
@@ -289,7 +284,7 @@
             for (var i = 0; i < coapPingTime.length; i ++ )
                 sum += coapPingTime[i];
 
-            $('#coapPing').text((Math.round(10 * sum / coapPingTime.length) / 10).toString() + ' ms');
+            roundTripTimeData[0].values[1].y = Math.round(10 * sum / coapPingTime.length) / 10;
 		});
 	});
 
@@ -299,6 +294,7 @@
     var chart_3;
     var chart_4;
     var chart_5;
+    var chart_6;
     nv.addGraph(function() {
         chart_1 = nv.models.lineWithFocusChart()
             .margin({top: 50, right: 80, bottom: 30, left: 80})
@@ -453,6 +449,36 @@
         return chart_5;
     });
 
+
+	nv.addGraph(function() {
+        chart_6 = nv.models.multiBarChart()
+            .margin({top: 50, bottom: 50, left: 130})
+            .groupSpacing(0.5)
+            .useInteractiveGuideline(true)
+            .stacked(true)
+            .reduceXTicks(false)
+            .showLegend(false)
+            .showControls(false)
+        ;
+
+        chart_6.xAxis
+            .showMaxMin(true)
+        ;
+
+        chart_6.yAxis
+            .axisLabel("Round-trip Time")
+            .tickFormat(function(d) {return d3.format(',f')(d) + ' ms'})
+        ;
+
+        d3.select('#chart-6-field svg')
+            .datum(roundTripTimeData)
+            .call(chart_6);
+
+        nv.utils.windowResize(chart_6.update);
+
+        return chart_6;
+    });
+
     
     setInterval(function() {
     	if (liveData[0].values.length > 99) {
@@ -483,6 +509,7 @@
         chart_3.update();
         chart_4.update();
         chart_5.update();
+        chart_6.update();
     }, 1000);
 
     // d3.select("#start-stop-button").on("click",function() {
@@ -496,6 +523,7 @@
 	<ul class="nav nav-tabs" role="tablist">
 		<li role="presentation" class="active"><a href="#message-field" role="tab" data-toggle="tab">Message</a></li>
 		<li role="presentation"><a href="#chart-1-field" role="tab" data-toggle="tab">Real-time Transaction</a></li>
+		<li role="presentation"><a href="#chart-6-field" role="tab" data-toggle="tab">Round-trip Time</a></li>
 		<li role="presentation"><a href="#chart-3-field" role="tab" data-toggle="tab">MQTT Packet</a></li>
 		<li role="presentation"><a href="#chart-4-field" role="tab" data-toggle="tab">CoAP Packet</a></li>
 		<li role="presentation"><a href="#chart-2-field" role="tab" data-toggle="tab">Packet Comparison</a></li>
@@ -511,7 +539,7 @@
 						<h4>Protocol:</h4>
 						<p>MQTT</p>
 					</div>
-					<div class="col-md-2">
+					<div class="col-md-4">
 						<h4>Host:</h4>
 						<p>{{ result.host_1 }}</p>
 					</div>
@@ -519,13 +547,9 @@
 						<h4>Port:</h4>
 						<p>{{ result.port_1 }}</p>
 					</div>
-					<div class="col-md-3">
+					<div class="col-md-4">
 						<h4>Topic:</h4>
 						<p>{{ result.topic_1 }}</p>
-					</div>
-					<div class="col-md-3">
-						<h4>Round-trip Time:</h4>
-						<p><span id="mqttPing">---</span></p>
 					</div>
 					<div class="col-md-12">
 						<h4>Message:</h4>
@@ -540,7 +564,7 @@
 						<h4>Protocol:</h4>
 						<p>CoAP</p>
 					</div>
-					<div class="col-md-2">
+					<div class="col-md-4">
 						<h4>Host:</h4>
 						<p>{{ result.host_2 }}</p>
 					</div>
@@ -548,13 +572,9 @@
 						<h4>Port:</h4>
 						<p>{{ result.port_2 }}</p>
 					</div>
-					<div class="col-md-3">
+					<div class="col-md-4">
 						<h4>Topic:</h4>
 						<p>{{ result.topic_2 }}</p>
-					</div>
-					<div class="col-md-3">
-						<h4>Round-trip Time:</h4>
-						<p><span id="coapPing">---</span></p>
 					</div>
 					<div class="col-md-12">
 						<h4>Message:</h4>
@@ -571,6 +591,10 @@
 				<div class="border-row" style="margin-bottom: 30px;"></div>
 				<button type="button" class="btn btn-default" id="start-stop-button" onclick="run = !run; chart_1.update();">Start/Stop Graphing</button>
 			</div>
+		</div>
+
+		<div role="tabpanel" class="tab-pane" id="chart-6-field">
+			<svg></svg>
 		</div>
 
 		<div role="tabpanel" class="tab-pane" id="chart-3-field">
