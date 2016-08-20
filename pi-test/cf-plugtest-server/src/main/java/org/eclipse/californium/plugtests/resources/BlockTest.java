@@ -1,22 +1,25 @@
 package org.eclipse.californium.plugtests.resources;
 
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CHANGED;
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.NOT_ACCEPTABLE;
+import static org.eclipse.californium.core.coap.MediaTypeRegistry.APPLICATION_OCTET_STREAM;
+
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.coap.CoAP.Type;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 
-import static org.eclipse.californium.core.coap.CoAP.ResponseCode.*;
-import static org.eclipse.californium.core.coap.MediaTypeRegistry.*;
-
-public class TempAndHumi extends CoapResource {
-
-	private byte[] tempAndHumi = null;
-	private int dataCf = TEXT_PLAIN;
+public class BlockTest extends CoapResource {
+	
+	private byte[] blockTest = null;
+	private int dataCf = APPLICATION_OCTET_STREAM;
 	
 	/*
 	 * Constructor for a new TemperatureResource
 	 */
-	public TempAndHumi() {
-		super("temp-and-humi");
+	public BlockTest() {
+		super("block-test");
 		setObservable(true);
 		getAttributes().addResourceType("observe");
 		getAttributes().setObservable();
@@ -26,7 +29,7 @@ public class TempAndHumi extends CoapResource {
 	public void handleGET(CoapExchange exchange) {
 		
 		exchange.setMaxAge(10);
-		exchange.respond(CONTENT, tempAndHumi, dataCf);
+		exchange.respond(CONTENT, blockTest, dataCf);
 	}
 
 	public void handlePUT(CoapExchange exchange) {
@@ -57,7 +60,7 @@ public class TempAndHumi extends CoapResource {
 		}
 		
 		// set payload and content type
-		tempAndHumi = payload;
+		blockTest = payload;
 		dataCf = format;
 
 		getAttributes().clearContentType();
@@ -66,5 +69,5 @@ public class TempAndHumi extends CoapResource {
 		// signal that resource state changed
 		changed();
 	}
-	
+
 }

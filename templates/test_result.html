@@ -5,7 +5,7 @@
 	svg {
 		display: block;
 	}
-	#chart-1-field, #chart-2-field, #chart-3-field, #chart-4-field, #chart-5-field, #chart-6-field {
+	#chart-1-field, #chart-2-field, #chart-3-field, #chart-4-field, #chart-5-field, #chart-6-field, #chart-7-field {
 		height: 500px;
 		width: 100%;
 	}
@@ -53,6 +53,15 @@
         return series;
     });
 
+    var blockTestData = [
+    {
+        'key': 'Time',
+        'values': [ ['MQTT', 0], ['CoAP', 0] ]
+    }
+    ].map(function(series) {
+        series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
+        return series;
+    });
 
     var packetData = [
     {
@@ -174,6 +183,8 @@
     var mqttCount = 0;
     var mqttPingTime = [];
     var coapPingTime = [];
+    var mqttBlockTime = [];
+    var coapBlockTime = [];
 	$(document).ready(function(){
 		var socket = io.connect('http://' + document.domain + ':' + location.port + '/socket_test');
 
@@ -237,6 +248,17 @@
             roundTripTimeData[0].values[0].y = Math.round(10 * sum / mqttPingTime.length) / 10;
 		});
 
+        socket.on('MQTT/block', function(msg) {
+            var timeCost = msg.timeCost;
+            mqttBlockTime.push(timeCost);
+            mqttBlockTime = mqttBlockTime.slice(-30); // keep last 30 samples
+            var sum = 0;
+            for (var i = 0; i < mqttBlockTime.length; i ++ )
+                sum += mqttBlockTime[i];
+
+            blockTestData[0].values[0].y = Math.round(10 * sum / mqttBlockTime.length) / 10;
+        });
+
 		socket.on('CoAP/{{ result.topic_2 }}', function(msg) {
 			var message = msg.payload.replace('\n', '<br>');
 			$('#output_2').html(message);
@@ -286,6 +308,17 @@
 
             roundTripTimeData[0].values[1].y = Math.round(10 * sum / coapPingTime.length) / 10;
 		});
+
+        socket.on('CoAP/block', function(msg) {
+            var timeCost = msg.timeCost;
+            coapBlockTime.push(timeCost);
+            coapBlockTime = coapBlockTime.slice(-30); // keep last 30 samples
+            var sum = 0;
+            for (var i = 0; i < coapBlockTime.length; i ++ )
+                sum += coapBlockTime[i];
+
+            blockTestData[0].values[1].y = Math.round(10 * sum / coapBlockTime.length) / 10;
+        });
 	});
 
     
@@ -295,6 +328,7 @@
     var chart_4;
     var chart_5;
     var chart_6;
+    var chart_7;
     nv.addGraph(function() {
         chart_1 = nv.models.lineWithFocusChart()
             .margin({top: 50, right: 80, bottom: 30, left: 80})
@@ -332,7 +366,7 @@
             .useInteractiveGuideline(true)
             .stacked(true)
             .reduceXTicks(false)
-            .showLegend(false)
+            .showLegend(true)
         ;
 
         chart_2.xAxis
@@ -363,7 +397,7 @@
             .useInteractiveGuideline(true)
             .stacked(true)
             .reduceXTicks(false)
-            .showLegend(false)
+            .showLegend(true)
         ;
 
         chart_3.xAxis
@@ -394,7 +428,7 @@
             .useInteractiveGuideline(true)
             .stacked(true)
             .reduceXTicks(false)
-            .showLegend(false)
+            .showLegend(true)
         ;
 
         chart_4.xAxis
@@ -479,8 +513,44 @@
         return chart_6;
     });
 
-    
+    nv.addGraph(function() {
+        chart_7 = nv.models.multiBarChart()
+            .margin({top: 50, bottom: 50, left: 130})
+            .groupSpacing(0.5)
+            .useInteractiveGuideline(true)
+            .stacked(true)
+            .reduceXTicks(false)
+            .showLegend(false)
+            .showControls(false)
+        ;
+
+        chart_7.xAxis
+            .showMaxMin(true)
+        ;
+
+        chart_7.yAxis
+            .axisLabel("Average Transmission Time")
+            .tickFormat(function(d) {return d3.format(',f')(d) + ' ms'})
+        ;
+
+        d3.select('#chart-7-field svg')
+            .datum(blockTestData)
+            .call(chart_7);
+
+        nv.utils.windowResize(chart_7.update);
+
+        return chart_7;
+    });
+
+    var mqttKeepAlive = 0
     setInterval(function() {
+        mqttKeepAlive += 1;
+        if (mqttKeepAlive >= 60 && totalData[0].values[1].y > 0 && totalData[0].values[2].y > 0) {
+            totalData[0].values[1].y += 56 + 60;
+            totalData[0].values[2].y += 56 + 60;
+            mqttKeepAlive = 0;
+        }
+        
     	if (liveData[0].values.length > 99) {
 			liveData[0].values.shift();
 		}
@@ -510,6 +580,7 @@
         chart_4.update();
         chart_5.update();
         chart_6.update();
+        chart_7.update();
     }, 1000);
 
     // d3.select("#start-stop-button").on("click",function() {
@@ -528,6 +599,7 @@
 		<li role="presentation"><a href="#chart-4-field" role="tab" data-toggle="tab">CoAP Packet</a></li>
 		<li role="presentation"><a href="#chart-2-field" role="tab" data-toggle="tab">Packet Comparison</a></li>
 		<li role="presentation"><a href="#chart-5-field" role="tab" data-toggle="tab">Accumulation</a></li>
+        <li role="presentation"><a href="#chart-7-field" role="tab" data-toggle="tab">Block Test</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -622,6 +694,14 @@
 				<div class="col-md-3"></div>
 			</div>
 		</div>
+
+        <div role="tabpanel" class="tab-pane" id="chart-7-field">
+            <svg></svg>
+            <div align="center">
+                <p>Block Size: <strong>{{ result.blockSize }}</strong> bytes</p>
+                <p>Conten Format: <strong>{{ result.blockCf }}</strong></p>
+            </div>
+        </div>
 
 
 		<div class="row">			

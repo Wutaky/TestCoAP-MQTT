@@ -20,27 +20,61 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
-mqtt_start_time = 0
+mqtt_ping_start_time = 0
+mqtt_block_start_time = 0
 
-class mqttPublish(object):
-	mqttc = mqtt.Client()
+with open("static/images/021.jpg", "rb") as imageFile:
+    file = imageFile.read()
+    global byteArray
+    byteArray = bytearray(file)
+    imageFile.close()
+
+class mqttPingTest(object):
+	mqttc = mqtt.Client()	
 
 	def on_connect(mqttc, obj, flags, rc):
 	    print("rc: "+str(rc))
 
-	def publish(self, host, port, topic, topic_p):
+	def pingTest(self, host, port, topic_p):
 		self.mqttc.connect(host, port)
 		self.mqttc.loop_start()
 		while True:
-			global mqtt_start_time
-			mqtt_start_time = int(round(time.time() * 1000))
+			global mqtt_ping_start_time
+			mqtt_ping_start_time = int(round(time.time() * 1000))
 			self.mqttc.publish(topic_p, 'ping', qos = 1)
-			time.sleep(2)
+			time.sleep(2)	
 
 	def stopPublish(self):
 		self.mqttc.loop_stop()
 
 	mqttc.on_connect = on_connect
+
+
+class mqttBlockTest(object):
+	mqttc = mqtt.Client()
+
+	def on_connect(mqttc, obj, flags, rc):
+	    print("rc: "+str(rc))
+
+	def blockTest(self, host, port):
+		self.mqttc.connect(host, port)
+		self.mqttc.loop_start()
+		while True:
+			global mqtt_block_start_time
+			mqtt_block_start_time = int(round(time.time() * 1000))
+			self.mqttc.publish("big-data-block", byteArray , 1)
+			time.sleep(15)
+
+	def on_publish(mqttc, obj, mid):
+		timeCost = int(round(time.time() * 1000)) - mqtt_block_start_time
+		print 'MQTT Block: ' + str(timeCost) + ' ms'
+		socketio.emit('MQTT/block', {'timeCost': timeCost}, broadcast = True, namespace = '/socket_test')
+
+	def stopPublish(self):
+		self.mqttc.loop_stop()
+
+	mqttc.on_connect = on_connect
+	mqttc.on_publish = on_publish
 
 
 class mqttSubscribe(object):
@@ -55,7 +89,7 @@ class mqttSubscribe(object):
 
 	def on_ping_test(self, mqttc, obj, msg):
 		end_time = int(round(time.time() * 1000))
-		latency = end_time - mqtt_start_time
+		latency = end_time - mqtt_ping_start_time
 		socketio.emit('MQTT/ping', {'latency': latency}, broadcast = True, namespace = '/socket_test')
 
 	def on_subscribe(mqttc, obj, mid, granted_qos):
@@ -85,6 +119,7 @@ class coapSubcribe(object):
     topic_p = ''
     start_time = 0
     last_start_second = ''
+    block_start_time = 0
 
     def subscribe(self, host, port, topic, topic_p):
     	self.host = host
@@ -92,9 +127,13 @@ class coapSubcribe(object):
     	self.topic = topic
     	self.topic_p = topic_p
 
-    	global loop
-    	loop = task.LoopingCall(self.putResource)
-        loop.start(2)
+    	global loop_1
+    	global loop_2
+    	loop_1 = task.LoopingCall(self.pingTestResource)
+    	loop_2 = task.LoopingCall(self.blockTestResource)
+        loop_1.start(2)
+        loop_2.start(15)
+
 
     	if not reactor.running:
     		reactor.listenUDP(61616, self.protocol)
@@ -115,10 +154,10 @@ class coapSubcribe(object):
         request_p.opt.uri_path = ('ping-test',)
         request_p.opt.observe = 0
         request_p.remote = (ip_address(self.host), self.port)
-        d_p = self.protocol.request(request_p, observeCallback = self.pingResponse)
+        d_p = self.protocol.request(request_p, observeCallback = self.pingOutputResponse)
         d_p.addErrback(self.noResponse)  
 
-    def putResource(self):
+    def pingTestResource(self):
     	self.start_time = int(round(time.time() * 1000))
     	payload = self.topic_p + datetime.datetime.today().strftime("%S")
         request = coap.Message(code = coap.PUT, payload = payload)
@@ -127,11 +166,20 @@ class coapSubcribe(object):
         request.remote = (ip_address(self.host), self.port)        
         d = self.protocol.request(request)
 
+    def blockTestResource(self):
+        request = coap.Message(code = coap.PUT, payload = byteArray)
+        request.opt.uri_path = ("block-test",)
+        request.opt.content_format = coap.media_types_rev['application/octet-stream']
+        request.remote = (ip_address(self.host), self.port)
+        self.block_start_time = int(round(time.time() * 1000))
+        d = self.protocol.request(request)
+        d.addCallback(self.blockOutputResponse)    
+
     def outputResponse(self, response):
         print('=====================\nCoAP:\n'+self.topic+"\n"+str(response.payload)+'\n=====================')
         socketio.emit('CoAP/' + self.topic, {'payload': response.payload}, broadcast = True, namespace = '/socket_test')
 
-    def pingResponse(self, response):
+    def pingOutputResponse(self, response):
     	payload = response.payload
 
     	if payload[:4] == self.topic_p and payload[-2:] != self.last_start_second:
@@ -139,6 +187,11 @@ class coapSubcribe(object):
     		self.last_start_second = payload[-2:]
     		
     		socketio.emit('CoAP/ping', {'latency': latency}, broadcast = True, namespace = '/socket_test')
+
+    def blockOutputResponse(self, response):
+        timeCost = int(round(time.time() * 1000)) - self.block_start_time
+        print 'CoAP Block: ' + str(timeCost) + ' ms'
+        socketio.emit('CoAP/block', {'timeCost': timeCost}, broadcast = True, namespace = '/socket_test')
 
     def noResponse(self, failure):
         print('Failed to fetch resource:')
@@ -149,10 +202,13 @@ class coapSubcribe(object):
 def unsubscribe():
 	mqtt_sub = mqttSubscribe()
 	mqtt_sub.unsubscribe()
-	mqtt_pub = mqttPublish()
-	mqtt_pub.stopPublish()
+	mqtt_ping = mqttPingTest()
+	mqtt_ping.stopPublish()
+	mqtt_block = mqttBlockTest()
+	mqtt_block.stopPublish()
 	if coap_thread.isAlive():
-		loop.stop()
+		loop_1.stop()
+		loop_2.stop()
 	return redirect('/')
 
 
@@ -200,18 +256,24 @@ def homepage():
 				  'host_2': host_2,
 				  'port_2': port_2,
 				  'topic_2': topic_2,
-				  'empty_2': empty_2
+				  'empty_2': empty_2,
+				  'blockSize': len(byteArray),
+				  'blockCf': 'image/jpeg'
 				  }
 		topic_p = 'p' + str(random.randint(100, 999))
 		if validation:
 			if not empty_1:
-				mqtt_pub = mqttPublish()
-				mqtt_pub_thread = threading.Thread(target = mqtt_pub.publish, args = [host_1, port_1, topic_1, topic_p])
+				mqtt_ping = mqttPingTest()
+				mqtt_ping_thread = threading.Thread(target = mqtt_ping.pingTest, args = [host_1, port_1, topic_p])
+
+				mqtt_block = mqttBlockTest()
+				mqtt_block_thread = threading.Thread(target = mqtt_block.blockTest, args = [host_1, port_1])
 
 				mqtt_sub = mqttSubscribe()
 				mqtt_sub_thread = threading.Thread(target = mqtt_sub.subscribe, args = [host_1, port_1, topic_1, topic_p])
 
-				mqtt_pub_thread.start()
+				mqtt_ping_thread.start()
+				mqtt_block_thread.start()
 				mqtt_sub_thread.start()
 			if not empty_2:
 				coap_sub = coapSubcribe()

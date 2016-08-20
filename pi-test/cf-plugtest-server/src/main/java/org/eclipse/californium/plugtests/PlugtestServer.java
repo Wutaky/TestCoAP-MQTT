@@ -23,6 +23,7 @@ import org.eclipse.californium.core.network.Endpoint;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.core.network.interceptors.MessageTracer;
 import org.eclipse.californium.core.network.interceptors.OriginTracer;
+import org.eclipse.californium.plugtests.resources.BlockTest;
 import org.eclipse.californium.plugtests.resources.Create;
 import org.eclipse.californium.plugtests.resources.DefaultTest;
 import org.eclipse.californium.plugtests.resources.Large;
@@ -133,6 +134,7 @@ public class PlugtestServer extends CoapServer {
         add(new Shutdown());
         add(new TempAndHumi());
         add(new PingTest());
+        add(new BlockTest());
     }
     
     

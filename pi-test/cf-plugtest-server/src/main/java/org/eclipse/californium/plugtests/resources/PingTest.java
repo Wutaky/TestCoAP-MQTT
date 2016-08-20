@@ -7,9 +7,6 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.*;
 import static org.eclipse.californium.core.coap.MediaTypeRegistry.*;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 public class PingTest extends CoapResource {
 
 	private String pingTest = null;

@@ -1,4 +1,4 @@
-import sys, io
+import sys, io, time
 
 from twisted.internet import reactor, task
 from twisted.python import log
@@ -24,31 +24,28 @@ class Agent():
         array = bytearray(file)
         imageFile.close()
 
+    start_time = 0
+
     def __init__(self, protocol):
         self.protocol = protocol
         reactor.callLater(1, self.putResource)
 
-        # loop = task.LoopingCall(self.putResource)
-        # loop.start(60)
+        loop = task.LoopingCall(self.putResource)
+        loop.start(15)
 
     def putResource(self):
-        request = coap.Message(code = coap.PUT, payload = 'start')
-        request.opt.uri_path = ("temp-and-humi",)
-        request.opt.content_format = coap.media_types_rev['text/plain']
-        request.remote = (ip_address('192.168.0.100'), coap.COAP_PORT)
-        d = protocol.request(request)
-        d.addCallback(self.printResponse)
-
         request = coap.Message(code = coap.PUT, payload = self.array)
-        request.opt.uri_path = ("temp-and-humi",)
-        request.opt.content_format = coap.media_types_rev['text/plain']
+        request.opt.uri_path = ("block-test",)
+        request.opt.content_format = coap.media_types_rev['application/octet-stream']
         request.remote = (ip_address('192.168.0.100'), coap.COAP_PORT)
+        print 'Start uploading...'
+        self.start_time = int(round(time.time() * 1000))
         d = protocol.request(request)
-        d.addCallback(self.printResponse)
+        d.addCallback(self.on_publish)
 
-    def printResponse(self, response):
+    def on_publish(self, response):
         print 'Response Code: ' + coap.responses[response.code]
-        print 'Payload: ' + response.payload    
+        print str(int(round(time.time() * 1000)) - self.start_time) + ' ms'
 
 # log.startLogging(sys.stdout)
 
