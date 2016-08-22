@@ -23,6 +23,9 @@ socketio = SocketIO(app)
 mqtt_ping_start_time = 0
 mqtt_block_start_time = 0
 
+empty_1 = True
+empty_2 = True
+
 with open("static/images/021.jpg", "rb") as imageFile:
     file = imageFile.read()
     global byteArray
@@ -200,13 +203,14 @@ class coapSubcribe(object):
 
 @app.route('/unsubscribe/', methods = ['GET'])
 def unsubscribe():
-	mqtt_sub = mqttSubscribe()
-	mqtt_sub.unsubscribe()
-	mqtt_ping = mqttPingTest()
-	mqtt_ping.stopPublish()
-	mqtt_block = mqttBlockTest()
-	mqtt_block.stopPublish()
-	if coap_thread.isAlive():
+	if not empty_1:
+		mqtt_sub = mqttSubscribe()
+		mqtt_sub.unsubscribe()
+		mqtt_ping = mqttPingTest()
+		mqtt_ping.stopPublish()
+		mqtt_block = mqttBlockTest()
+		mqtt_block.stopPublish()
+	if not empty_2:
 		loop_1.stop()
 		loop_2.stop()
 	return redirect('/')
@@ -222,6 +226,8 @@ def homepage():
 		port_2 = request.form['port_2'].strip()
 		topic_2 = request.form["topic_2"].strip()
 		validation = True
+		global empty_1
+		global empty_2
 		empty_1 = True
 		empty_2 = True
 
@@ -277,7 +283,6 @@ def homepage():
 				mqtt_sub_thread.start()
 			if not empty_2:
 				coap_sub = coapSubcribe()
-				global coap_thread
 				coap_thread = threading.Thread(target = coap_sub.subscribe, args = [host_2, port_2, topic_2, topic_p])
 				coap_thread.start()
 

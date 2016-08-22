@@ -120,19 +120,19 @@
         'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
     },
     {
-        'key': 'Publish ACK',
+        'key': 'PUBACK',
         'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
     },
     {
-        'key': 'Publish Received',
+        'key': 'PUBREC',
         'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
     },
     {
-        'key': 'Publish Release',
+        'key': 'PUBREL',
         'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
     },
     {
-        'key': 'Publish Complete',
+        'key': 'PUBCOMP',
         'values': [ ['QoS 0', 0], ['QoS 1', 0], ['QoS 2', 0] ]
     }
     ].map(function(series) {
@@ -144,35 +144,35 @@
     var coapPacket = [
     {
         'key': 'CON',
-        'values': [ ['Single GET', 0], ['Observe', 0] ]
+        'values': [ ['GET Request', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( Ethernet )',
-        'values': [ ['Single GET', 0], ['Observe', 0] ]
+        'values': [ ['GET Request', 0], ['Observe', 0] ]
     }, 
     {
         'key': 'CON ( Internet Protocol )',
-        'values': [ ['Single GET', 0], ['Observe', 0] ]
+        'values': [ ['GET Request', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( UDP )',
-        'values': [ ['Single GET', 0], ['Observe', 0] ]
+        'values': [ ['GET Request', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( Header )',
-        'values': [ ['Single GET', 0], ['Observe', 0] ]
+        'values': [ ['GET Request', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( Option )',
-        'values': [ ['Single GET', 0], ['Observe', 0] ]
+        'values': [ ['GET Request', 0], ['Observe', 0] ]
     },
     {
         'key': 'CON ( Payload )',
-        'values': [ ['Single GET', 0], ['Observe', 0] ]
+        'values': [ ['GET Request', 0], ['Observe', 0] ]
     },
     {
         'key': 'ACK',
-        'values': [ ['Single GET', 0], ['Observe', 0] ]
+        'values': [ ['GET Request', 0], ['Observe', 0] ]
     }
     ].map(function(series) {
         series.values = series.values.map(function(d) { return {x: d[0], y: d[1] } });
@@ -281,8 +281,8 @@
 			packetData[6].values[1].y = msg.payload.length;
 
 
-			coapPacket[0].values[0].y = 63;
-			coapPacket[7].values[0].y = 115;
+			coapPacket[0].values[0].y = 42 + 8 + '{{ result.topic_2 }}'.length;
+			coapPacket[7].values[0].y = 52 + msg.payload.length;
 
 	        coapPacket[1].values[1].y = 14;
 	        coapPacket[2].values[1].y = 20;
