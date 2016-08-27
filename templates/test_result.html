@@ -240,7 +240,7 @@
 		socket.on('MQTT/ping', function(msg) {
 			var latency = msg.latency;
             mqttPingTime.push(latency);
-            mqttPingTime = mqttPingTime.slice(-30); // keep last 30 samples
+            mqttPingTime = mqttPingTime.slice(-100); // keep last 100 samples
             var sum = 0;
             for (var i = 0; i < mqttPingTime.length; i ++ )
                 sum += mqttPingTime[i];
@@ -301,7 +301,7 @@
 		socket.on('CoAP/ping', function(msg) {
 			var latency = msg.latency;
             coapPingTime.push(latency);
-            coapPingTime = coapPingTime.slice(-30); // keep last 30 samples
+            coapPingTime = coapPingTime.slice(-100); // keep last 100 samples
             var sum = 0;
             for (var i = 0; i < coapPingTime.length; i ++ )
                 sum += coapPingTime[i];

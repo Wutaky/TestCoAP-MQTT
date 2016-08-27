@@ -233,6 +233,7 @@ def homepage():
 
 		if port_1.isdigit():
 			port_1 = int(port_1)
+			print port_1
 		if port_2.isdigit():
 			port_2 = int(port_2)
 
@@ -248,7 +249,7 @@ def homepage():
 			validation = False
 			flash('Port can not be empty!')
 		if port_1 != '' or port_2 != '':
-			if port_1 > 9999 and not empty_1 or port_2 > 9999 and not empty_2:
+			if (port_1 < 0 or port_1 > 65535) and not empty_1 or (port_2 < 0 or port_2 > 65535) and not empty_2:
 				validation = False
 				flash('Wrong port!')
 		if topic_1 == '' and not empty_1 or topic_2 == '' and not empty_2 or empty_1 and empty_2:
